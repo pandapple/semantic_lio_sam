@@ -1,0 +1,196 @@
+%YAML:1.0
+
+# ============================================
+# Semantic Triangular Descriptor Configuration
+# ============================================
+# This configuration file is for semantic-enhanced binary triangular descriptor
+# which combines geometric features with semantic labels for improved place recognition
+
+# ============================================
+# Binary Descriptor Parameters
+# ============================================
+# Parameters for extracting binary descriptors from point clouds
+
+useful_corner_num: 500        # Maximum number of useful corners to extract
+                             # Controls the number of key points used for descriptor generation
+
+plane_detection_thre: 0.01   # Threshold for plane detection (minimum eigenvalue of covariance matrix)
+                             # Smaller values = stricter plane detection
+                             # Typical range: 0.005 - 0.05
+
+plane_merge_normal_thre: 0.1 # Normal threshold for plane merging
+                             # Planes with similar normals (difference < threshold) can be merged
+                             # Typical range: 0.05 - 0.3
+
+plane_merge_dis_thre: 0.3    # Distance threshold for plane merging
+                             # Planes within this distance can be merged
+                             # Typical range: 0.1 - 0.5
+
+voxel_size: 1.0              # Size of each voxel in meters
+                             # Larger values = coarser resolution, faster processing
+                             # Typical range: 0.5 - 2.0 (indoor: 0.5, outdoor: 1.0-2.0)
+
+voxel_init_num: 10           # Minimum number of points in a voxel for plane extraction
+                             # Voxels with fewer points are ignored
+                             # Typical range: 5 - 20
+
+proj_plane_num: 1            # Number of projection planes to use
+                             # More planes = more features but slower
+                             # Typical range: 1 - 3
+
+proj_image_resolution: 0.5   # Resolution of the projected image in meters
+                             # Smaller values = finer resolution, more detail
+                             # Typical range: 0.2 - 0.5
+
+proj_image_high_inc: 0.1     # Height increment for the projected image in meters
+                             # Controls the vertical resolution of binary descriptors
+                             # Typical range: 0.1 - 0.5
+                             # NOTE: Must match config_outdoor.yaml (0.1) for consistent descriptor generation
+
+proj_dis_min: -1.0            # Minimum distance to the projection plane (meters)
+                             # Points closer than this are ignored
+                             # Typical range: -1.0 - 0.0
+
+proj_dis_max: 4.0            # Maximum distance to the projection plane (meters)
+                             # Points farther than this are ignored
+                             # Typical range: 3.0 - 10.0
+
+summary_min_thre: 10          # Minimum segment distance threshold for binary descriptor
+                             # This is the minimum number of distance segments that must have points
+                             # cut_num = (proj_dis_max - proj_dis_min) / proj_image_high_inc
+                             # For default config: cut_num = (5.0 - 0.0) / 0.5 = 10
+                             # So summary_min_thre should be <= 10, typically 5-8
+                             # Typical range: 3 - 10
+
+line_filter_enable: 1        # Enable line point filtering
+                             # 1: enabled (filters out line-like features)
+                             # 0: disabled (keeps all features)
+                             # Must match config_outdoor.yaml (1) for consistent behavior
+                             # Recommended: 0 for indoor, 1 for outdoor with many linear features
+
+# ============================================
+# Triangle Descriptor Parameters
+# ============================================
+# Parameters for generating triangular descriptors from binary descriptors
+
+descriptor_near_num: 15      # Number of neighboring points to consider when generating triangles
+                            # More neighbors = more triangles but slower
+                            # Typical range: 8 - 15
+
+descriptor_min_len: 2.0      # Minimum triangle edge length (meters)
+                            # Triangles with edges shorter than this are rejected
+                            # Typical range: 0.5 - 2.0
+
+descriptor_max_len: 50.0     # Maximum triangle edge length (meters)
+                            # Triangles with edges longer than this are rejected
+                            # Typical range: 5.0 - 50.0 (indoor: 5-30, outdoor: 10-50)
+
+non_max_suppression_radius: 2.0  # Neighborhood range for non-maximum suppression (meters)
+                                 # Removes redundant descriptors within this radius
+                                 # Typical range: 1.0 - 5.0
+                                 # Must match config_outdoor.yaml (max_constrait_dis: 2.0) for consistent behavior
+
+std_side_resolution: 0.2     # Edge length amplification coefficient for descriptor indexing
+                            # Used to convert edge lengths to integer indices
+                            # Typical range: 0.1 - 0.5
+                            # Formula: index = edge_length / std_side_resolution
+
+# ============================================
+# Place Recognition Parameters
+# ============================================
+# Parameters for loop closure detection and place recognition
+
+skip_near_num: 0           # Number of frames to skip when searching for loops
+                            # Prevents matching with very recent frames
+                            # Typical range: 10 - 100
+                            # For inter-sequence matching, set to a large negative value
+
+candidate_num: 50           # Maximum number of candidate frames to consider
+                            # More candidates = better recall but slower
+                            # Typical range: 20 - 100
+
+rough_dis_threshold: 0.01   # Threshold coefficient for triangle edge length distance matching
+                            # Used in initial candidate selection
+                            # Typical range: 0.01 - 0.1
+                            # Formula: threshold = triangle_norm * rough_dis_threshold
+                            # Must match config_outdoor.yaml (0.01) for consistent behavior
+
+similarity_threshold: 0.5   # Binary descriptor similarity threshold
+                            # Descriptors with similarity below this are rejected
+                            # Also used as semantic ratio difference threshold
+                            # Typical range: 0.5 - 0.9
+
+icp_threshold: 0.2          # Threshold for plane-to-plane ICP to trigger loop closure
+                            # Higher values = more lenient matching
+                            # Typical range: 0.2 - 0.8
+
+normal_threshold: 0.5       # Threshold for plane normal matching in geometric verification
+                            # Used in plane-to-plane ICP
+                            # Typical range: 0.05 - 0.3
+
+dis_threshold: 1.0          # Distance threshold for point-to-plane validation
+                            # Used in geometric verification
+                            # Typical range: 0.1 - 0.5
+
+# ============================================
+# Semantic Matching Parameters
+# ============================================
+# Parameters for semantic-enhanced descriptor matching
+
+semantic_ratio_threshold: 0.3      # Maximum allowed difference in semantic label ratio (0.0-1.0)
+                                     # Semantic ratio is the proportion of a label within a voxel
+
+# Semantic-weighted ICP parameters
+semantic_icp_weight: 2.0           # ICP weight for semantic-matched points (relative to non-matched points)
+                                     # When semantic labels match, the point's weight is multiplied by this value
+                                     # Typical range: 1.5-3.0, set to 1.0 to disable semantic weighting
+                                     # Larger values give higher weight to semantically matched points, improving pose estimation accuracy
+                                     # Adjacent frames may have different sampling, so use a lenient threshold
+                                     # Typical range: 0.3 - 0.7
+                                     # Lower values = stricter matching, higher values = more lenient
+
+# Excluded semantic labels (optional)
+# These labels will be filtered out during descriptor extraction
+# Format: list of label IDs (uint32_t) or a single label ID
+# Common labels to exclude: vehicles (10-18), persons (11), cyclists (13), etc.
+# SemanticKITTI label IDs: https://github.com/PRBonn/semantic-kitti-api/blob/master/config/semantic-kitti-api.yaml
+
+excluded_labels: [12, 13, 20, 27, 28, 29] #[0, 1, 10, 11, 13, 15, 16, 18, 20, 30, 31, 32, 40, 99]  # General excluded labels (applied to all voxels)
+                    # Example: [10, 11, 13, 15, 16, 18]  # vehicles, persons, cyclists, etc.
+                    # Empty list [] means no labels are excluded
+
+excluded_labels_plane: [12, 13, 20, 27, 28, 29] #[0, 1, 10, 11, 13, 15, 16, 18, 20, 30, 31, 32, 40, 99]  # Excluded labels specifically for plane voxels
+                           # Takes precedence over excluded_labels for plane voxels
+                           # If empty, falls back to excluded_labels
+                           # Example: [10, 11]  # exclude vehicles and persons from plane voxels
+
+# Note: excluded_labels_non_plane is not used because BTC descriptor only processes plane voxels
+# and does not extract corners from non-plane voxels
+
+# ============================================
+# Notes
+# ============================================
+# 1. For indoor environments:
+#    - Use smaller voxel_size (0.5-1.0)
+#    - Use smaller descriptor_max_len (5-30)
+#    - Consider increasing proj_plane_num (2-3)
+#
+# 2. For outdoor environments:
+#    - Use larger voxel_size (1.0-2.0)
+#    - Use larger descriptor_max_len (10-50)
+#    - Enable line_filter_enable (1)
+#
+# 3. Semantic matching requires:
+#    - At least semantic_vertex_match_threshold vertices must have matching semantic labels
+#    - Semantic ratio differences must be within semantic_ratio_threshold
+#    - This provides additional filtering compared to geometric-only matching
+#    - For adjacent frames, consider using semantic_vertex_match_threshold=2 and semantic_ratio_threshold=0.5
+#
+# 4. Excluded labels configuration:
+#    - Use excluded_labels to filter out unstable semantic categories (e.g., dynamic objects)
+#    - Common labels to exclude: vehicles (10-18), persons (11), cyclists (13)
+#    - excluded_labels_plane: specific exclusions for plane voxels (e.g., vehicles on roads)
+#    - If excluded_labels_plane is empty, it falls back to excluded_labels
+#    - Empty lists [] mean no filtering is applied
+#    - Note: BTC descriptor only processes plane voxels, so excluded_labels_non_plane is not used
+

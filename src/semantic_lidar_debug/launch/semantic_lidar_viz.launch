@@ -1,0 +1,22 @@
+<launch>
+  <!-- 与主工程 semanticLabelToColor 一致；仅订阅雷达、按序读 label 文件夹、发布彩色点云 -->
+  <arg name="lidar_topic" default="/points_raw"/>
+  <arg name="label_folder" default=""/>
+  <!-- 與 merge_semantic_pt.py 一致：設為 sequence/velodyne，用 .bin 與 .label 同行對應；雷達話題僅作同步 -->
+  <arg name="velodyne_folder" default=""/>
+  <arg name="label_index_offset" default="0"/>
+  <arg name="output_topic" default="/semantic_debug_cloud"/>
+  <!-- 启动时自动打开 RViz，订阅彩色点云（RGB8）；设为 false 可只跑节点 -->
+  <arg name="rviz" default="true"/>
+  <arg name="rviz_config" default="$(find semantic_lidar_debug)/rviz/semantic_debug.rviz"/>
+
+  <node pkg="semantic_lidar_debug" type="semantic_lidar_viz_node" name="semantic_lidar_viz" output="screen">
+    <param name="lidar_topic" value="$(arg lidar_topic)"/>
+    <param name="label_folder" value="$(arg label_folder)"/>
+    <param name="velodyne_folder" value="$(arg velodyne_folder)"/>
+    <param name="label_index_offset" type="int" value="$(arg label_index_offset)"/>
+    <param name="output_topic" value="$(arg output_topic)"/>
+  </node>
+
+  <node pkg="rviz" type="rviz" name="semantic_debug_rviz" args="-d $(arg rviz_config)" output="screen" if="$(arg rviz)"/>
+</launch>

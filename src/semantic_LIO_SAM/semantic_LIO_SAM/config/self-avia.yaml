@@ -1,0 +1,59 @@
+common:
+  lid_topic: "/livox/lidar"
+  imu_topic: "/IMU_data"
+  time_sync_en: false         # ONLY turn on when external time synchronization is really not possible
+  time_offset_lidar_to_imu: 0.0 # Time offset between lidar and IMU calibrated by other algorithms, e.g. LI-Init (can be found in README).
+                                  # This param will take effect no matter what time_sync_en is. So if the time offset is not known exactly, please set as 0.0
+preprocess:
+    lidar_type: 1                # 1 for Livox serials LiDAR, 2 for Velodyne LiDAR, 3 for ouster LiDAR, 
+    scan_line: 6
+    blind: 4
+
+mapping:
+    acc_cov: 0.5
+    gyr_cov: 0.3
+    b_acc_cov: 0.0001
+    b_gyr_cov: 0.0001
+    fov_degree:    270
+    det_range:     450.0
+    extrinsic_est_en:  false      # true: enable the online estimation of IMU-LiDAR extrinsic
+    extrinsic_T: [-0.036671, -0.155763, 0.032389]
+    extrinsic_R: [0.999898, 0.009489, -0.010653,
+                  -0.009360, 0.999883, 0.012136,
+                  0.010767, -0.012035, 0.999870]
+ 
+publish:
+    path_en:  false
+    scan_publish_en:  true       # false: close all the point cloud output
+    dense_publish_en: true       # false: low down the points number in a global-frame point clouds scan.
+    scan_bodyframe_pub_en: true  # true: output the point cloud scans in IMU-body-frame
+    semantic_color_cloud_en: true # true: publish semantic colorized cloud in RViz instead of raw intensity cloud
+
+pcd_save:
+    pcd_save_en: true
+    interval: -1                 # how many LiDAR frames saved in each pcd file; 
+                                 # -1 : all frames will be saved in ONE pcd file, may lead to memory crash when having too much frames.
+                                 
+# Loop closure
+loopClosureEnableFlag: true                   # use loopclousre or not 
+loopClosureFrequency: 4.0                     # Hz, regulate loop closure constraint add frequency
+surroundingKeyframeSize: 50                   # submap size (when loop closure enabled)
+historyKeyframeSearchRadius: 1.5             # meters, key frame that is within n meters from current pose will be considerd for loop closure
+historyKeyframeSearchTimeDiff: 30.0           # seconds, key frame that is n seconds older will be considered for loop closure
+historyKeyframeSearchNum: 20                  # number of hostory key frames will be fused into a submap for loop closure
+historyKeyframeFitnessScore: 0.3              # icp threshold, the smaller the better alignment
+
+# Semantic fusion (loop candidate filtering + semantic ICP)
+semantic:
+  label_folder: ""                            # e.g. /path/to/labels
+  semantic_weight: 0.5                        # semantic ICP penalty weight
+  use_semantic_icp: false                     # enable semantic ICP in loop registration
+  loop_semantic_fusion_enable: true           # enable semantic cue in loop candidate selection
+  loop_semantic_similarity_threshold: 0.2     # cosine similarity threshold between keyframe semantic histograms
+  loop_semantic_score_weight: 0.5             # penalty weight for low semantic similarity in candidate scoring
+  factor_graph_semantic_weighting_enable: true # enable semantic weighting for factor-graph constraints
+  factor_graph_semantic_on_odom: true          # apply semantic weighting to odometry factors
+  factor_graph_semantic_on_loop: true          # apply semantic weighting to loop-closure factors
+  factor_graph_semantic_weight: 0.5            # [0,1], larger means stronger semantic influence
+  factor_graph_semantic_min_variance_scale: 0.5 # min variance scale at high semantic consistency
+  factor_graph_semantic_max_variance_scale: 2.0 # max variance scale at low semantic consistency
