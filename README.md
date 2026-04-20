@@ -20,7 +20,7 @@ This design improves robustness in challenging environments with repeated struct
 
 Our paper has been published in **IEEE Transactions on Circuits and Systems for Video Technology (IEEE TCSVT)**:
 
-- **Semantic-LIO-SAM**: [IEEE Xplore](https://ieeexplore.ieee.org/abstract/document/11361116)
+-[IEEE Xplore](https://ieeexplore.ieee.org/abstract/document/11361116)
 
 If you find this work useful, please consider citing our paper.
 
